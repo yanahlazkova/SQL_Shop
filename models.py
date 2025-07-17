@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
@@ -13,7 +13,7 @@ class Buyer(Base):
     email_id = Column(Integer, ForeignKey('emails.id'), nullable=False)
 
     email = relationship("Email", back_populates="buyer")
-    orders = relationship("Order", back_populates="buyer")
+    order = relationship("Order", back_populates="buyer")
 
 
 class Email(Base):
@@ -32,22 +32,23 @@ class Manager(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String(255))
 
+    order = relationship('Order', back_populates='manager')
+
 
 class Order(Base):
     '''У замовлення може бути один покупець і один продавець'''
     __tablename__ = 'orders'
 
     id = Column(Integer, primary_key=True)
-    number = Column(Integer, unique=True, nullable=False)
+    # number = Column(Integer, unique=True, nullable=False)
     manager_id = Column(Integer, ForeignKey('managers.id'), nullable=False)
     buyer_id = Column(Integer, ForeignKey('buyers.id'), nullable=False)
 
     manager = relationship('Manager', back_populates='order')
     buyer = relationship('Buyer', back_populates='order')
 
-    order_products = relationship("OrderProduct", back_populates='order')
-    products = relationship('Product', secondary='order_product', viewonly=True)
-
+    order_product = relationship("OrderProduct", back_populates='order')
+    product = relationship('Product', secondary='order_product', viewonly=True)
 
 
 class Product(Base):
@@ -55,9 +56,10 @@ class Product(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False)
+    # removed = Column(Boolean, default=False)
 
-    order_products = relationship('OrderProduct', back_populates='product')
-    orders = relationship('Order', secondary='order_product')
+    order_product = relationship('OrderProduct', back_populates='product')
+    order = relationship('Order', secondary='order_product')
 
 
 class OrderProduct(Base):
@@ -69,3 +71,6 @@ class OrderProduct(Base):
 
     order = relationship('Order', back_populates='order_product')
     product = relationship('Product', back_populates='order_product')
+
+# class Store(Base):
+#     __tablename__ = 'stores'
