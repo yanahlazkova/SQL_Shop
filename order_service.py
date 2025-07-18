@@ -1,4 +1,36 @@
+from buyer_service import display_all_buyers
+from manager_service import display_all_managers
 from models import Order, Manager, Buyer, OrderProduct, Product
+from product_service import display_all_products
+
+
+def menu_orders(session):
+    while True:
+        choice = int(input("""
+                1. Створити замовлення
+                2. Вивести список замовлень
+                3. Вивести замовлення за номером
+                4. Вихід
+                """))
+        match choice:
+            case 1:
+                # вибрати покупця
+                display_all_buyers(session)
+                buyer_id = int(input('Enter id-buyer: '))
+                # вибрати менеджера
+                display_all_managers(session)
+                manager_id = int(input('Enter id-manager: '))
+                # вивести список товару
+                display_all_products(session)
+                create_order(session, buyer_id, manager_id)
+            case 2:
+                display_all_orders(session)
+            case 3:
+                order_id = int(input('Enter the id-order: '))
+                display_order_on_id(session, order_id)
+            case 4:
+                session.close()
+                break
 
 
 def add_product():
@@ -62,7 +94,22 @@ def display_all_orders(session):
         session.close()
 
 
-def display_orders_id(session, order_id):
-    products = session.query(OrderProduct.product_id).filter_in(Order.id == order_id).all()
-    for product in products:
-        print(product)
+def display_order_on_id(session, order_id):
+    try:
+        order_products = session.query(OrderProduct).filter_by(order_id=order_id).all()
+        order = session.query(Order).get(order_id)
+        buyer = session.query(Buyer).get(order.buyer_id)
+        manager = session.query(Manager).get(order.manager_id)
+        text = f"""
+                Замовлення N {order.id}
+            Покупець: {buyer.name}       Продавець: {manager.name}
+        """
+        ind = 0
+
+        for op in order_products:
+            ind += 1
+            product = session.query(Product).get(op.product_id)
+            text += f"\n\t\t{ind}. {product.name} - {op.quantity} шт."
+        print(text)
+    finally:
+        session.close()

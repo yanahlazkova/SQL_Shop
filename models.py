@@ -1,6 +1,7 @@
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
+from sqlalchemy import Column, Integer, String, Date, Boolean, ForeignKey, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
+from datetime import date, datetime
 
 Base = declarative_base()
 
@@ -14,6 +15,9 @@ class Buyer(Base):
 
     email = relationship("Email", back_populates="buyer")
     order = relationship("Order", back_populates="buyer")
+
+    def __repr__(self):
+        return f'Покупець {self.name} - {self.email}'
 
 
 class Email(Base):
@@ -60,6 +64,7 @@ class Product(Base):
 
     order_product = relationship('OrderProduct', back_populates='product')
     order = relationship('Order', secondary='order_product')
+    store = relationship('Store', secondary='product')
 
 
 class OrderProduct(Base):
@@ -72,5 +77,14 @@ class OrderProduct(Base):
     order = relationship('Order', back_populates='order_product')
     product = relationship('Product', back_populates='order_product')
 
-# class Store(Base):
-#     __tablename__ = 'stores'
+
+class ProductMovement(Base):
+    __tablename__ = 'product_movements'
+
+    id = Column(Integer, primary_key=True)
+    product_id = Column(Integer, ForeignKey('products.id'))
+    date = Column(DateTime, default=datetime.now)
+    quantity = Column(Integer, nullable=False)  # +10 = приход, -5 = расход
+
+    product = relationship('Product')
+
