@@ -1,6 +1,6 @@
 ''' Функції роботи з таблицею товарів (додавання, видалення, оновлення...'''
 import fakerdata as fake
-from models import Product
+from models import Product, ProductMovement
 
 
 def menu_product(session):
@@ -17,7 +17,7 @@ def menu_product(session):
             case 1:
                 add_products(session)
             case 2:
-                add_quantity_product(session)
+                incoming_product(session)
             case 3:
                 product_id = int(input('Enter the ID-product: '))
                 product_name = input('Enter new name of product: ')
@@ -40,13 +40,25 @@ def add_products(session):
         session.close()
 
 
-def add_quantity_product(session):
-    display_all_products(session)
-    product_id = int(input(f'Вкажіть ID товару: '))
+def incoming_product(session):
+    """надходження товару"""
+    try:
+        display_all_products(session)
+        product_id = int(input(f'Вкажіть ID товару: '))
 
-    product = session.query(Product).get(product_id)
+        product = session.query(Product).get(product_id)
 
-    count_product = int(input(f'Введіть кількість {product.name}: '))
+        count_product = int(input(f'Введіть кількість {product.name}: '))
+
+        product_incoming = ProductMovement(product=product, quantity=count_product)
+        session.add(product_incoming)
+        session.commit()
+        session.refresh(product_incoming)
+        print(f'Додано надходження:\n'
+              f'{product_incoming.id} - {product_incoming.product.name} - {product_incoming.quantity}')
+    finally:
+        session.close()
+
 
 
 def change_product(session, product_id, name):
