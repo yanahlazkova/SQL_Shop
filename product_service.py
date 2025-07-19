@@ -1,6 +1,7 @@
 ''' Функції роботи з таблицею товарів (додавання, видалення, оновлення...'''
 import fakerdata as fake
 from models import Product, ProductMovement
+from sqlalchemy import func
 
 
 def menu_product(session):
@@ -17,7 +18,13 @@ def menu_product(session):
             case 1:
                 add_products(session)
             case 2:
-                incoming_product(session)
+                display_all_products(session)
+                product_id = int(input(f'Вкажіть ID товару: '))
+                count_product = int(input(f'Введіть кількість: '))
+
+                # incoming_product(product_id, count_product, session)
+
+                outgoing_product(product_id, count_product, session)
             case 3:
                 product_id = int(input('Enter the ID-product: '))
                 product_name = input('Enter new name of product: ')
@@ -40,16 +47,10 @@ def add_products(session):
         session.close()
 
 
-def incoming_product(session):
+def incoming_product(product_id, count_product, session):
     """надходження товару"""
     try:
-        display_all_products(session)
-        product_id = int(input(f'Вкажіть ID товару: '))
-
         product = session.query(Product).get(product_id)
-
-        count_product = int(input(f'Введіть кількість {product.name}: '))
-
         product_incoming = ProductMovement(product=product, quantity=count_product)
         session.add(product_incoming)
         session.commit()
@@ -59,6 +60,22 @@ def incoming_product(session):
     finally:
         session.close()
 
+
+def outgoing_product(product_id, count, session):
+    """зменшення кількості товару"""
+    try:
+        # отримаємо загальну кількість товару
+        result = (session.query(func.sum(ProductMovement.quantity))
+                  .filter(ProductMovement.product_id == product_id).scalar())
+        print(f'Загальна кількість товару на складі {result} шт.')
+
+        if result > count:
+            incoming_product(product_id, (count * (-1)), session)
+        else:
+            print(f'Недестатня кількість товару{(session.query(Product).get(product_id)).name}: {result}шт.')
+
+    finally:
+        session.close()
 
 
 def change_product(session, product_id, name):
