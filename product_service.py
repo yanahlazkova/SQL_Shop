@@ -12,7 +12,8 @@ def menu_product(session):
                     2. Додати кількість товару
                     3. Редагувати товар
                     4. Вивести залишки товарів
-                    5. Вихід
+                    5. Ввести залишки товаів
+                    6. Вихід
                     """))
         match choice:
             case 1:
@@ -33,6 +34,9 @@ def menu_product(session):
                 # display_all_products(session)
                 display_balance_products(session)
             case 5:
+                # Заповнення таблиці ProductMovement(надходження або вибуття товарів)
+                add_balance(session)
+            case 6:
                 break
 
 
@@ -127,3 +131,34 @@ def display_balance_products(session):
     finally:
         session.close()
 
+
+def add_balance(session):
+    """"Проходить по кожному товару з табл.Product
+    та виконує надходження"""
+    try:
+        # """Додавання кількості товару вручну"""
+        # products = session.query(Product.id, Product.name)
+        # list_products = []
+        # for product_id, product in products:
+        #     list_products.append({
+        #         'id': product_id,
+        #         'name': product,
+        #         'count': 0
+        #     })
+        #
+        # for product in list_products:
+        #     # product['count'] = int(input(f'Enter balance {product['name']}: '))
+        #     product['count'] = fake.get_random_number()
+        #     print(product)
+        """Додавання рандомно кількості товару """
+        products = session.query(Product)
+        # for product_id in products:
+        #     incoming_product(product_id, fake.get_random_number(), session)
+        for product in products:
+            # print(product.id)
+            product_movement = ProductMovement(product_id=product.id, quantity=fake.get_random_number())
+            session.add(product_movement)
+            session.commit()
+
+    finally:
+        session.close()
