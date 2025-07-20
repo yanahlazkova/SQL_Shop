@@ -30,7 +30,8 @@ def menu_product(session):
                 product_name = input('Enter new name of product: ')
                 change_product(session, product_id, product_name)
             case 4:
-                display_all_products(session)
+                # display_all_products(session)
+                display_balance_products(session)
             case 5:
                 break
 
@@ -69,7 +70,7 @@ def outgoing_product(product_id, count, session):
                   .filter(ProductMovement.product_id == product_id).scalar())
         print(f'Загальна кількість товару на складі {result} шт.')
 
-        if result > count:
+        if result >= count:
             incoming_product(product_id, (count * (-1)), session)
         else:
             print(f'Недестатня кількість товару{(session.query(Product).get(product_id)).name}: {result}шт.')
@@ -101,6 +102,28 @@ def display_all_products(session):
         for product_id, product_name in products:
             text += f'\n\t\t{product_id}. {product_name}'
         print(text)
+    finally:
+        session.close()
+
+
+def display_balance_products(session):
+    try:
+        products_balance = (session.query(ProductMovement.product_id,
+                                          func.sum(ProductMovement.quantity)
+                                          .label('stock'))
+                            .group_by(ProductMovement.product_id).all())
+        text = '''
+                        ЗАЛИШКИ ТОВАРІВ:
+        \n'''
+        if products_balance:
+            i = 0
+            for product_id, stock in products_balance:
+                i += 1
+                product = session.query(Product).get(product_id)
+                text += f'\t\t{i}. {product.name}\tзалишок: {stock}\n'
+            print(text)
+        else:
+            print('Немає залків, склад порожній...')
     finally:
         session.close()
 
