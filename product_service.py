@@ -122,6 +122,7 @@ def display_balance_products(session):
         products_balance = (session.query(Product.name, func.sum(ProductMovement.quantity).label('stock'))
             .join(Product)
             .group_by(Product.id)
+            .having(func.sum(ProductMovement.quantity) != 0)
             .all()
                             )
         text = '''
