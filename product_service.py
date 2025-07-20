@@ -23,9 +23,8 @@ def menu_product(session):
                 product_id = int(input(f'Вкажіть ID товару: '))
                 count_product = int(input(f'Введіть кількість: '))
 
-                # incoming_product(product_id, count_product, session)
+                incoming_product(product_id, count_product, session)
 
-                outgoing_product(product_id, count_product, session)
             case 3:
                 product_id = int(input('Enter the ID-product: '))
                 product_name = input('Enter new name of product: ')
@@ -112,19 +111,28 @@ def display_all_products(session):
 
 def display_balance_products(session):
     try:
-        products_balance = (session.query(ProductMovement.product_id,
-                                          func.sum(ProductMovement.quantity)
-                                          .label('stock'))
-                            .group_by(ProductMovement.product_id).all())
+        # products_balance = (session.query(ProductMovement.product_id,
+        #                                   func.sum(ProductMovement.quantity)
+        #                                   .label('stock'))
+        #                     .group_by(ProductMovement.product_id).all())
+        # products_balance = (
+            # session.query(Product.name, func.sum(ProductMovement.quantity).label('stock'))
+            # .join(Product).group_by(Product.name).all())
+
+        products_balance = (session.query(Product.name, func.sum(ProductMovement.quantity).label('stock'))
+            .join(Product)
+            .group_by(Product.id)
+            .all()
+                            )
         text = '''
                         ЗАЛИШКИ ТОВАРІВ:
         \n'''
         if products_balance:
             i = 0
-            for product_id, stock in products_balance:
+            for product, stock in products_balance:
                 i += 1
-                product = session.query(Product).get(product_id)
-                text += f'\t\t{i}. {product.name}\tзалишок: {stock}\n'
+                # product = session.query(Product).get(product_id)
+                text += f'\t\t{i}. {product}\tзалишок: {stock}\n'
             print(text)
         else:
             print('Немає залків, склад порожній...')
