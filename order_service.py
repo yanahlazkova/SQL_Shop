@@ -1,7 +1,9 @@
+from sqlalchemy import func
+
 from buyer_service import display_all_buyers
 from manager_service import display_all_managers
-from models import Order, Manager, Buyer, OrderProduct, Product
-from product_service import display_all_products
+from models import Order, Manager, Buyer, OrderProduct, Product, ProductMovement
+from product_service import display_all_products, display_balance_products, outgoing_product
 
 
 def menu_orders(session):
@@ -20,8 +22,8 @@ def menu_orders(session):
                 # вибрати менеджера
                 display_all_managers(session)
                 manager_id = int(input('Enter id-manager: '))
-                # вивести список товару
-                display_all_products(session)
+                # вивести список товарів
+                display_balance_products(session)
                 create_order(session, buyer_id, manager_id)
             case 2:
                 display_all_orders(session)
@@ -65,6 +67,34 @@ def save_order(session, manager_id, buyer_id, list_products):
         session.close()
 
 
+def checking_stocks(session, list_products):
+    try:
+        # for product in list_products:
+        #     stock_product = (session.query(func.sum(ProductMovement.quantity))
+        #                        .filter(ProductMovement.product_id == product[0]).scalar())
+        #     if stock_product < product[1]:
+        #         print(f'Немає в наявсности. Залишок: {stock_product}')
+
+        for i in range(len(list_products)-1):
+            stock_product = (session.query(func.sum(ProductMovement.quantity))
+                             .filter(ProductMovement.product_id == list_products[i][0]).scalar())
+            if stock_product > 0:
+                if stock_product < list_products[i][1]:
+                    product = session.query(Product).get(list_products[i][0])
+                    print(f'Немає в наявсности {product.name}. Залишок: {stock_product}шт.')
+                    new_item = list_products[i][0], stock_product
+                    list_products.pop(i)
+                    list_products.insert(i, new_item)
+            elif stock_product == 0:
+                print('Remove...')
+                list_products.pop(i)
+
+        return list_products
+
+    finally:
+        session.close()
+
+
 def create_order(session, buyer_id, manager_id):
     print('create_order')
     list_products = [add_product()]
@@ -74,7 +104,15 @@ def create_order(session, buyer_id, manager_id):
             case 1:
                 list_products.append(add_product())
             case 2:
-                save_order(session, manager_id, buyer_id, list_products)
+                # перевірка наявності залишків товару
+                list_p = checking_stocks(session, list_products)
+                # print(list_p)
+                if list_p:
+                    save_order(session, manager_id, buyer_id, list_p)
+                    for product_id, count in list_p:
+                        outgoing_product(product_id, count, session)
+                else:
+                    print('order is empty...')
                 break
             case 3:
                 break

@@ -20,6 +20,12 @@ tech_items = [
 
 
 def get_product():
-    return random.choice(tech_items)
+    product = random.choice(tech_items)
+    return product
+
+
+def get_random_number():
+    # return fake.random_int(min=-1000, max=1000, step=10)
+    return fake.random_int(max=300, step=10)
 
 
